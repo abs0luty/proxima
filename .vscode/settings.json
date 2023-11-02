@@ -1,0 +1,8 @@
+{
+  "workbench.colorCustomizations": {
+    "editorInlayHint.foreground": "#777777ff",
+    "editorInlayHint.background": "#00000000",
+    "minimap.background": "#00000000",
+    "scrollbar.shadow": "#00000000"
+  }
+}

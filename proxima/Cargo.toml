@@ -1,0 +1,9 @@
+[package]
+name = "proxima"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+paste = "1.0.14"
+string-interner = "0.14.0"
+lazy_static = "1.4.0"
