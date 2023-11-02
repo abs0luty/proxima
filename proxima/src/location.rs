@@ -23,15 +23,36 @@ impl CharLocation {
     }
 
     #[inline]
+    pub fn set_line(&mut self, line: usize) {
+        self.line = line;
+    }
+
+    #[inline]
     #[must_use]
     pub const fn column(&self) -> usize {
         self.column
     }
 
     #[inline]
+    pub fn set_column(&mut self, column: usize) {
+        self.column = column;
+    }
+
+    #[inline]
     #[must_use]
     pub const fn offset(&self) -> usize {
         self.offset
+    }
+
+    #[inline]
+    pub fn set_offset(&mut self, offset: usize) {
+        self.offset = offset;
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn next_byte_location(&self) -> Self {
+        Self::new(self.line, self.column + 1, self.offset + 1)
     }
 }
 

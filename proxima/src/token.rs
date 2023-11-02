@@ -1,4 +1,5 @@
 use crate::location::SpanLocation;
+use derive_more::Display;
 use paste::paste;
 use std::fmt::Display;
 
@@ -6,12 +7,12 @@ macro_rules! keywords {
     ($($kw:ident),*) => {
         paste! {
             #[derive(Clone, Copy)]
-            enum Keyword {
+            pub enum Keyword {
                 $([<$kw:camel>]),*
             }
 
             impl Keyword {
-                fn from_str(s: &str) -> Option<Self> {
+                pub fn from(s: &str) -> Option<Self> {
                     match s {
                         $(stringify!($kw) => Some(Keyword::[<$kw:camel>])),*,
                         _ => None
@@ -36,7 +37,7 @@ keywords!(
 );
 
 #[derive(Clone, Copy)]
-enum Punctuator {
+pub enum Punctuator {
     Arrow,              // ->
     Eq,                 // =
     DoubleEq,           // ==
@@ -98,17 +99,90 @@ enum Punctuator {
     Eof,
 }
 
-#[derive(Clone, Copy)]
-enum RawToken {
-    Punctuator(Punctuator),
-    Keyword(Keyword),
-    Number,
-    Word,
-    Text,
-    EndOfFile,
+/// Represents error that scanning process can fail with.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Display)]
+pub enum Error {
+    #[display(fmt = "digit doesn't correspond to base")]
+    DigitDoesNotCorrespondToBase,
+    #[display(fmt = "empty character literal")]
+    EmptyCharacterLiteral,
+    #[display(fmt = "empty escape sequence")]
+    EmptyEscapeSequence,
+    #[display(fmt = "empty wrapped identifier literal")]
+    EmptyWrappedIdentifier,
+    #[display(fmt = "expected `}}` in byte escape sequence")]
+    ExpectedCloseBracketInByteEscapeSequence,
+    #[display(fmt = "expected `}}` in Unicode escape sequence")]
+    ExpectedCloseBracketInUnicodeEscapeSequence,
+    #[display(fmt = "expected digit in byte escape sequence")]
+    ExpectedDigitInByteEscapeSequence,
+    #[display(fmt = "expected digit in Unicode escape sequence")]
+    ExpectedDigitInUnicodeEscapeSequence,
+    #[display(fmt = "expected `{{` in byte escape sequence")]
+    ExpectedOpenBracketInByteEscapeSequence,
+    #[display(fmt = "expected `{{` in Unicode escape sequence")]
+    ExpectedOpenBracketInUnicodeEscapeSequence,
+    #[display(fmt = "exponent has no digits")]
+    ExponentHasNoDigits,
+    #[display(fmt = "exponent requires decimal mantissa")]
+    ExponentRequiresDecimalMantissa,
+    #[display(fmt = "number contains no digits")]
+    NumberContainsNoDigits,
+    #[display(fmt = "invalid byte escape sequence")]
+    InvalidByteEscapeSequence,
+    #[display(fmt = "invalid digit")]
+    InvalidDigit,
+    #[display(fmt = "invalid radix point")]
+    InvalidRadixPoint,
+    #[display(fmt = "invalid Unicode escape sequence")]
+    InvalidUnicodeEscapeSequence,
+    #[display(fmt = "more than one character in character literal")]
+    MoreThanOneCharInCharLiteral,
+    #[display(fmt = "number cannot be parsed")]
+    NumberParseError,
+    #[display(fmt = "underscore must separate successive digits")]
+    UnderscoreMustSeparateSuccessiveDigits,
+    #[display(fmt = "unexpected character")]
+    UnexpectedChar,
+    #[display(fmt = "unknown escape sequence")]
+    UnknownEscapeSequence,
+    #[display(fmt = "untermined character literal")]
+    UnterminatedCharLiteral,
+    #[display(fmt = "unterminated string literal")]
+    UnterminatedStringLiteral,
+    #[display(fmt = "unterminated wrapped identifier")]
+    UnterminatedWrappedIdentifier,
 }
 
-struct Token {
+#[derive(Clone, Copy)]
+pub enum RawToken {
+    Punctuator(Punctuator),
+    Keyword(Keyword),
+    Error(Error),
+    Identifier,
+    Number,
+    Text,
+}
+
+impl From<Keyword> for RawToken {
+    fn from(kw: Keyword) -> Self {
+        RawToken::Keyword(kw)
+    }
+}
+
+impl From<Punctuator> for RawToken {
+    fn from(p: Punctuator) -> Self {
+        RawToken::Punctuator(p)
+    }
+}
+
+impl From<Error> for RawToken {
+    fn from(e: Error) -> Self {
+        RawToken::Error(e)
+    }
+}
+
+pub struct Token {
     raw: RawToken,
     location: SpanLocation,
 }
