@@ -49,7 +49,7 @@ pub enum Punctuator {
     GreaterEq,          // >=
     PlusEq,             // +=
     MinusEq,            // -=
-    StarEq,             // *=
+    AsteriskEq,         // *=
     SlashEq,            // /=
     PercentEq,          // %=
     AtEq,               // @=
@@ -62,11 +62,11 @@ pub enum Punctuator {
     TripleRightShiftEq, // >>>=
     DoublePlus,         // ++
     DoubleMinus,        // --
-    DoubleLess,         // <<
-    DoubleGreater,      // >>
+    LeftShift,          // <<
+    RightShift,         // >>
     TripleGreater,      // >>>
     DoubleDot,          // ..
-    DoubleStar,         // **
+    DoubleAsterisk,     // **
     QuestionColon,      // ?:
     DoubleQuestion,     // ??
     Tilde,              // ~
@@ -77,6 +77,7 @@ pub enum Punctuator {
     Ampersand,          // &
     DoubleAmpersand,    // &&
     Question,           // ?
+    Semicolon,          // ;
     Colon,              // :
     DoubleColon,        // ::
     OpenParent,         // (
@@ -90,12 +91,12 @@ pub enum Punctuator {
     Number,
     HexNumber,
     New,
-    Plus,    // +
-    Minus,   // -
-    Star,    // *
-    Slash,   // /
-    Percent, // %
-    At,      // @
+    Plus,     // +
+    Minus,    // -
+    Asterisk, // *
+    Slash,    // /
+    Percent,  // %
+    At,       // @
     Eof,
 }
 

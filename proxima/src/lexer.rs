@@ -4,7 +4,7 @@ use crate::{
     interner::{IdentifierId, PathId, StringId, DUMMY_IDENTIFIER_ID, DUMMY_STRING_ID},
     location::{CharLocation, SpanLocation},
     stable_likely::unlikely,
-    token::{Error, Keyword, RawToken, Token},
+    token::{Error, Keyword, Punctuator, RawToken, Token},
 };
 
 struct Lexer<'s> {
@@ -103,11 +103,18 @@ impl<'s> Lexer<'s> {
         SpanLocation::new(self.location, self.location.next_byte_location())
     }
 
-    fn advance_with(&mut self, raw: impl Into<RawToken>) -> Token {
+    fn advance_with(&mut self, raw: impl Into<RawToken>) -> Option<Token> {
         let token = Token::new(raw.into(), self.current_byte_location());
         self.advance();
 
-        token
+        Some(token)
+    }
+
+    fn advance_twice_with(&mut self, raw: impl Into<RawToken>) -> Option<Token> {
+        let token = Token::new(raw.into(), self.current_byte_location());
+        self.advance_twice();
+
+        Some(token)
     }
 
     fn advance_while(
@@ -153,12 +160,58 @@ impl Iterator for Lexer<'_> {
         }
 
         match (self.current, self.next) {
+            (Some(':'), _) => self.advance_with(Punctuator::Colon),
+            (Some('@'), _) => self.advance_with(Punctuator::At),
+            (Some('+'), Some('+')) => self.advance_twice_with(Punctuator::DoublePlus),
+            (Some('+'), Some('=')) => self.advance_twice_with(Punctuator::PlusEq),
+            (Some('+'), _) => self.advance_with(Punctuator::Plus),
+            (Some('-'), Some('>')) => self.advance_twice_with(Punctuator::Arrow),
+            (Some('-'), Some('-')) => self.advance_twice_with(Punctuator::DoubleMinus),
+            (Some('-'), Some('=')) => self.advance_twice_with(Punctuator::MinusEq),
+            (Some('-'), _) => self.advance_with(Punctuator::Minus),
+            (Some('*'), Some('*')) => self.advance_twice_with(Punctuator::DoubleAsterisk),
+            (Some('*'), Some('=')) => self.advance_twice_with(Punctuator::AsteriskEq),
+            (Some('*'), _) => self.advance_with(Punctuator::Asterisk),
+            (Some('/'), Some('=')) => self.advance_twice_with(Punctuator::SlashEq),
+            (Some('/'), _) => self.advance_with(Punctuator::Slash),
+            (Some('!'), Some('=')) => self.advance_twice_with(Punctuator::BangEq),
+            (Some('!'), _) => self.advance_with(Punctuator::Bang),
+            (Some('>'), Some('>')) => self.advance_twice_with(Punctuator::RightShift),
+            (Some('>'), Some('=')) => self.advance_twice_with(Punctuator::GreaterEq),
+            (Some('>'), _) => self.advance_with(Punctuator::Greater),
+            (Some('<'), Some('<')) => self.advance_twice_with(Punctuator::LeftShift),
+            (Some('<'), Some('=')) => self.advance_twice_with(Punctuator::LessEq),
+            (Some('<'), _) => self.advance_with(Punctuator::Less),
+            (Some('='), Some('=')) => self.advance_twice_with(Punctuator::DoubleEq),
+            (Some('='), _) => self.advance_with(Punctuator::Eq),
+            (Some('|'), Some('=')) => self.advance_twice_with(Punctuator::BarEq),
+            (Some('|'), Some('|')) => self.advance_twice_with(Punctuator::DoubleBar),
+            (Some('|'), _) => self.advance_with(Punctuator::Bar),
+            (Some('?'), Some('?')) => self.advance_twice_with(Punctuator::DoubleQuestion),
+            (Some('?'), Some(':')) => self.advance_twice_with(Punctuator::QuestionColon),
+            (Some('?'), _) => self.advance_with(Punctuator::Question),
+            (Some('&'), Some('&')) => self.advance_twice_with(Punctuator::DoubleAmpersand),
+            (Some('&'), _) => self.advance_with(Punctuator::Ampersand),
+            (Some('^'), Some('=')) => self.advance_twice_with(Punctuator::CaretEq),
+            (Some('^'), _) => self.advance_with(Punctuator::Caret),
+            (Some('~'), _) => self.advance_with(Punctuator::Tilde),
+            (Some('('), _) => self.advance_with(Punctuator::OpenParent),
+            (Some(')'), _) => self.advance_with(Punctuator::CloseParent),
+            (Some('['), _) => self.advance_with(Punctuator::OpenBracket),
+            (Some(']'), _) => self.advance_with(Punctuator::CloseBracket),
+            (Some('{'), _) => self.advance_with(Punctuator::OpenBrace),
+            (Some('}'), _) => self.advance_with(Punctuator::CloseBrace),
+            (Some(','), _) => self.advance_with(Punctuator::Comma),
+            (Some(';'), _) => self.advance_with(Punctuator::Semicolon),
+            (Some('%'), Some('=')) => self.advance_with(Punctuator::PercentEq),
+            (Some('%'), _) => self.advance_with(Punctuator::Percent),
+            (Some('.'), Some('.')) => self.advance_twice_with(Punctuator::DoubleDot),
             _ => {
                 if self.current.is_id_start() {
                     return Some(self.next_identifier_or_keyword());
                 }
 
-                Some(self.advance_with(Error::UnexpectedChar))
+                self.advance_with(Error::UnexpectedChar)
             }
         }
     }
