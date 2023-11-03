@@ -1,4 +1,4 @@
-use crate::location::SpanLocation;
+use crate::location::{HasLocation, Location};
 use derive_more::Display;
 use paste::paste;
 use std::fmt::Display;
@@ -6,7 +6,7 @@ use std::fmt::Display;
 macro_rules! keywords {
     ($($kw:ident),*) => {
         paste! {
-            #[derive(Clone, Copy)]
+            #[derive(Clone, Copy, PartialEq, Eq, Debug)]
             pub enum Keyword {
                 $([<$kw:camel>]),*
             }
@@ -31,12 +31,13 @@ macro_rules! keywords {
     };
 }
 
-keywords!(
-    struct, throw, foreach, enum, print, println, if, else, while, for, break, continue, func,
-    return, using, switch, case, include, class, new
-);
+keywords! {
+    struct, throw, foreach, enum, print, println, if,
+    else, while, for, break, continue, func, return,
+    using, switch, case, include, class, new
+}
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Punctuator {
     Arrow,              // ->
     Eq,                 // =
@@ -102,7 +103,7 @@ pub enum Punctuator {
 
 /// Represents error that scanning process can fail with.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Display)]
-pub enum Error {
+pub enum RawLexError {
     #[display(fmt = "digit doesn't correspond to base")]
     DigitDoesNotCorrespondToBase,
     #[display(fmt = "empty character literal")]
@@ -155,14 +156,47 @@ pub enum Error {
     UnterminatedWrappedIdentifier,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct LexError {
+    raw: RawLexError,
+    location: Location,
+}
+
+impl LexError {
+    #[inline]
+    #[must_use]
+    pub const fn new(raw: RawLexError, location: Location) -> Self {
+        Self { raw, location }
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn raw(&self) -> RawLexError {
+        self.raw
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn location(&self) -> Location {
+        self.location
+    }
+}
+
+impl From<LexError> for Token {
+    fn from(value: LexError) -> Self {
+        Token::new(value.raw.into(), value.location)
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum RawToken {
     Punctuator(Punctuator),
     Keyword(Keyword),
-    Error(Error),
+    Error(RawLexError),
     Identifier,
     Number,
     Text,
+    EndOfFile,
 }
 
 impl From<Keyword> for RawToken {
@@ -177,21 +211,29 @@ impl From<Punctuator> for RawToken {
     }
 }
 
-impl From<Error> for RawToken {
-    fn from(e: Error) -> Self {
+impl From<RawLexError> for RawToken {
+    fn from(e: RawLexError) -> Self {
         RawToken::Error(e)
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Token {
     raw: RawToken,
-    location: SpanLocation,
+    location: Location,
+}
+
+impl HasLocation for Token {
+    #[inline]
+    fn location(&self) -> Location {
+        self.location
+    }
 }
 
 impl Token {
     #[inline]
     #[must_use]
-    pub fn new(raw: RawToken, location: SpanLocation) -> Self {
+    pub fn new(raw: RawToken, location: Location) -> Self {
         Self { raw, location }
     }
 
@@ -199,11 +241,5 @@ impl Token {
     #[must_use]
     pub const fn raw(&self) -> RawToken {
         self.raw
-    }
-
-    #[inline]
-    #[must_use]
-    pub const fn location(&self) -> SpanLocation {
-        self.location
     }
 }

@@ -2,12 +2,12 @@ use std::str::Chars;
 
 use crate::{
     interner::{IdentifierId, PathId, StringId, DUMMY_IDENTIFIER_ID, DUMMY_STRING_ID},
-    location::{CharLocation, SpanLocation},
+    location::{CharLocation, Location},
     stable_likely::unlikely,
-    token::{Error, Keyword, Punctuator, RawToken, Token},
+    token::{Keyword, Punctuator, RawLexError, RawToken, Token},
 };
 
-struct Lexer<'s> {
+pub struct Lexer<'s> {
     /// Path of the file being scanned.
     path: PathId,
 
@@ -99,8 +99,8 @@ impl<'s> Lexer<'s> {
         self.advance();
     }
 
-    const fn current_byte_location(&self) -> SpanLocation {
-        SpanLocation::new(self.location, self.location.next_byte_location())
+    const fn current_byte_location(&self) -> Location {
+        Location::new(self.location, self.location.next_byte_location())
     }
 
     fn advance_with(&mut self, raw: impl Into<RawToken>) -> Option<Token> {
@@ -133,8 +133,8 @@ impl<'s> Lexer<'s> {
         self.advance_while(self.location, |current, _| current.is_whitespace());
     }
 
-    fn location_from(&self, start_location: CharLocation) -> SpanLocation {
-        SpanLocation::new(start_location, self.location)
+    fn location_from(&self, start_location: CharLocation) -> Location {
+        Location::new(start_location, self.location)
     }
 
     fn next_identifier_or_keyword(&mut self) -> Token {
@@ -211,7 +211,7 @@ impl Iterator for Lexer<'_> {
                     return Some(self.next_identifier_or_keyword());
                 }
 
-                self.advance_with(Error::UnexpectedChar)
+                self.advance_with(RawLexError::UnexpectedChar)
             }
         }
     }

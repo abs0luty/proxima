@@ -7,10 +7,6 @@ use lazy_static::lazy_static;
 use string_interner::{backend::StringBackend, StringInterner, Symbol};
 
 lazy_static! {
-    static ref PATH_INTERNER: Mutex<StringInterner<StringBackend<SymbolUsize>>> =
-        Mutex::new(StringInterner::new());
-    static ref STRING_INTERNER: Mutex<StringInterner<StringBackend<SymbolUsize>>> =
-        Mutex::new(StringInterner::new());
     static ref IDENTIFIER_INTERNER: Mutex<StringInterner<StringBackend<SymbolUsize>>> =
         Mutex::new(StringInterner::new());
 }
@@ -74,6 +70,11 @@ impl From<IdentifierId> for String {
     }
 }
 
+lazy_static! {
+    static ref STRING_INTERNER: Mutex<StringInterner<StringBackend<SymbolUsize>>> =
+        Mutex::new(StringInterner::new());
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct StringId(SymbolUsize);
 
@@ -102,6 +103,11 @@ impl From<StringId> for String {
     fn from(id: StringId) -> Self {
         Option::<String>::from(id).unwrap()
     }
+}
+
+lazy_static! {
+    static ref PATH_INTERNER: Mutex<StringInterner<StringBackend<SymbolUsize>>> =
+        Mutex::new(StringInterner::new());
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

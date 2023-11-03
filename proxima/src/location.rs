@@ -1,4 +1,4 @@
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct CharLocation {
     line: usize,
     column: usize,
@@ -14,6 +14,12 @@ impl CharLocation {
             column,
             offset,
         }
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn of_first_byte() -> Self {
+        Self::new(1, 0, 0)
     }
 
     #[inline]
@@ -56,17 +62,26 @@ impl CharLocation {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct SpanLocation {
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct Location {
     start: CharLocation,
     end: CharLocation,
 }
 
-impl SpanLocation {
+impl Location {
     #[inline]
     #[must_use]
     pub const fn new(start: CharLocation, end: CharLocation) -> Self {
         Self { start, end }
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn of_first_byte() -> Self {
+        Self::new(
+            CharLocation::of_first_byte(),
+            CharLocation::of_first_byte().next_byte_location(),
+        )
     }
 
     #[inline]
@@ -80,4 +95,9 @@ impl SpanLocation {
     pub const fn end(&self) -> CharLocation {
         self.end
     }
+}
+
+pub trait HasLocation {
+    #[must_use]
+    fn location(&self) -> Location;
 }
